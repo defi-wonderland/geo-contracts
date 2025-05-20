@@ -85,6 +85,15 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
     /// @dev This variable prevents a proposal from being created in the same block in which the multisig settings change.
     uint64 public lastMultisigSettingsChange;
 
+    event AddMemberProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        address indexed member,
+        address dao
+    );
+
     /// @notice Thrown when creating a proposal at the same block that the settings were changed.
     error ProposalCreationForbiddenOnSameBlock();
 
@@ -236,6 +245,15 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
         } else {
             proposal_.parameters.minApprovals = MIN_APPROVALS_WHEN_CREATED_BY_NON_EDITOR;
         }
+
+        emit AddMemberProposalCreated(
+            proposalId,
+            _proposer,
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _proposedMember,
+            address(dao())
+        );
     }
 
     /// @inheritdoc IMultisig

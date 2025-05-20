@@ -156,7 +156,6 @@ async function prepareInstallation() {
 
   const settings: MajorityVotingBase.VotingSettingsStruct = {
     duration: MGMT_DAO_PROPOSAL_DURATION,
-    minParticipation: MGMT_DAO_MIN_PROPOSAL_PARTICIPATION,
     supportThreshold: MGMT_DAO_PROPOSAL_SUPPORT_THRESHOLD,
     votingMode: 1, // Early execution
   };

@@ -20,7 +20,7 @@ dotenvConfig({path: resolve(__dirname, dotenvConfigPath)});
 const apiUrls: NetworkNameMapping = {
   mainnet: 'https://eth-mainnet.g.alchemy.com/v2/',
   sepolia: 'https://eth-sepolia.g.alchemy.com/v2/',
-  custom: process.env.DEPLOYMENT_RPC_ENDPOINT ?? '',
+  conduit: process.env.DEPLOYMENT_RPC_ENDPOINT ?? '',
 };
 
 export const networks: {[index: string]: NetworkUserConfig} = {
@@ -33,7 +33,7 @@ export const networks: {[index: string]: NetworkUserConfig} = {
     },
   },
   conduit: {
-    chainId: 19411,
+    chainId: 80451,
     url: process.env.DEPLOYMENT_RPC_ENDPOINT,
   },
   mainnet: {
@@ -47,11 +47,10 @@ export const networks: {[index: string]: NetworkUserConfig} = {
   polygon: {
     chainId: 137,
     url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-    url: `${apiUrls.sepolia}${process.env.ALCHEMY_API_KEY}`,
   },
   custom: {
     chainId: 19411,
-    url: apiUrls.custom,
+    url: apiUrls.conduit,
     // gasPrice: 20000000000,
   },
 };
@@ -100,10 +99,18 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: 'conduit',
+        chainId: networks.conduit.chainId!,
+        urls: {
+          apiURL: apiUrls.conduit,
+          browserURL: '',
+        },
+      },
+      {
         network: 'custom',
         chainId: networks.custom.chainId!,
         urls: {
-          apiURL: apiUrls.custom,
+          apiURL: apiUrls.conduit,
           browserURL: '',
         },
       },

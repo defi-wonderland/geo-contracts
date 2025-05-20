@@ -50,6 +50,65 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @notice The address of the plugin where new memberships are approved, using a different set of rules.
     MemberAccessPlugin public memberAccessPlugin;
 
+    event PublishEditsProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        string contentUri,
+        address dao
+    );
+
+    event RemoveMemberProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed member,
+        address dao
+    );
+
+    event AddEditorProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed editor,
+        address dao
+    );
+
+    event RemoveEditorProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed editor,
+        address dao
+    );
+
+    event AcceptSubspaceProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed subspace,
+        address dao
+    );
+
+    event RemoveSubspaceProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed subspace,
+        address dao
+    );
+
     /// @notice Emitted when the creator cancels a proposal
     event ProposalCanceled(uint256 proposalId);
 
@@ -112,7 +171,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         __MajorityVotingBase_init(_dao, _votingSettings);
 
         _addAddresses(_initialEditors);
-        emit EditorsAdded(_initialEditors);
+        emit EditorsAdded(address(_dao), _initialEditors);
 
         if (!_memberAccessPlugin.supportsInterface(MEMBER_ACCESS_INTERFACE_ID)) {
             revert InvalidInterface(address(_memberAccessPlugin));
@@ -314,6 +373,17 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             _spacePlugin,
             abi.encodeCall(SpacePlugin.publishEdits, (_editsContentUri))
         );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit PublishEditsProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _editsContentUri,
+            address(dao())
+        );
     }
 
     /// @notice Creates a proposal to make the DAO accept the given DAO as a subspace.
@@ -334,6 +404,18 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             _spacePlugin,
             abi.encodeCall(SpacePlugin.acceptSubspace, (address(_subspaceDao)))
         );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit AcceptSubspaceProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            address(_subspaceDao),
+            address(dao())
+        );
     }
 
     /// @notice Creates a proposal to make the DAO remove the given DAO as a subspace.
@@ -353,6 +435,18 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             _metadataContentUri,
             _spacePlugin,
             abi.encodeCall(SpacePlugin.removeSubspace, (address(_subspaceDao)))
+        );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit RemoveSubspaceProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            address(_subspaceDao),
+            address(dao())
         );
     }
 
@@ -392,6 +486,18 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             address(this),
             abi.encodeCall(MainVotingPlugin.removeMember, (_member))
         );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit RemoveMemberProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            _member,
+            address(dao())
+        );
     }
 
     /// @notice Creates a proposal to remove an existing member.
@@ -410,6 +516,18 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             address(this),
             abi.encodeCall(MainVotingPlugin.addEditor, (_proposedEditor))
         );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit AddEditorProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            _proposedEditor,
+            address(dao())
+        );
     }
 
     /// @notice Creates a proposal to remove an existing editor.
@@ -427,6 +545,18 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             _metadataContentUri,
             address(this),
             abi.encodeCall(MainVotingPlugin.removeEditor, (_editor))
+        );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit RemoveEditorProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            _editor,
+            address(dao())
         );
     }
 

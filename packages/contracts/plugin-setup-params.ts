@@ -1,5 +1,5 @@
 export const SpacePluginSetupParams: PluginSetupParams = {
-  PLUGIN_REPO_ENS_NAME: 'geo-space',
+  PLUGIN_REPO_ENS_NAME: 'geo-space-plugin',
   PLUGIN_CONTRACT_NAME: 'SpacePlugin',
   PLUGIN_SETUP_CONTRACT_NAME: 'SpacePluginSetup',
   VERSION: {
@@ -9,7 +9,7 @@ export const SpacePluginSetupParams: PluginSetupParams = {
 };
 
 export const PersonalSpaceAdminPluginSetupParams: PluginSetupParams = {
-  PLUGIN_REPO_ENS_NAME: 'geo-personal-voting',
+  PLUGIN_REPO_ENS_NAME: 'geo-personal-plugin',
   PLUGIN_CONTRACT_NAME: 'PersonalSpaceAdminPlugin',
   PLUGIN_SETUP_CONTRACT_NAME: 'PersonalSpaceAdminPluginSetup',
   VERSION: {
@@ -19,7 +19,7 @@ export const PersonalSpaceAdminPluginSetupParams: PluginSetupParams = {
 };
 
 export const GovernancePluginsSetupParams: PluginSetupParams = {
-  PLUGIN_REPO_ENS_NAME: 'geo-governance',
+  PLUGIN_REPO_ENS_NAME: 'geo-governance-plugin',
   PLUGIN_CONTRACT_NAME: 'MainVotingPlugin and MemberAccessPlugin',
   PLUGIN_SETUP_CONTRACT_NAME: 'GovernancePluginsSetup',
   VERSION: {
