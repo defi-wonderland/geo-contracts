@@ -22,6 +22,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
         this.initialize.selector ^
             this.executeProposal.selector ^
             this.submitEdits.selector ^
+            this.submitFlagContent.selector ^
             this.submitAcceptSubspace.selector ^
             this.submitRemoveSubspace.selector ^
             this.submitNewMember.selector ^
@@ -101,6 +102,25 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
 
         _actions[0].to = _spacePlugin;
         _actions[0].data = abi.encodeCall(SpacePlugin.publishEdits, (_contentUri));
+
+        uint256 _proposalId = _createProposal(msg.sender, _actions);
+
+        dao().execute(bytes32(_proposalId), _actions, 0);
+
+        // The event will be emitted by the space plugin
+    }
+
+    /// @notice Creates and executes a proposal that makes the DAO emit flag content on the given space.
+    /// @param _flagContentUri The URI of the IPFS content to flag.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    function submitFlagContent(
+        string memory _flagContentUri,
+        address _spacePlugin
+    ) public onlyMembers {
+        IDAO.Action[] memory _actions = new IDAO.Action[](1);
+
+        _actions[0].to = _spacePlugin;
+        _actions[0].data = abi.encodeCall(SpacePlugin.flagContent, (_flagContentUri));
 
         uint256 _proposalId = _createProposal(msg.sender, _actions);
 
