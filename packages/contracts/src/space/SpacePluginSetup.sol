@@ -33,7 +33,8 @@ contract SpacePluginSetup is PluginSetup {
     ) external returns (address plugin, PreparedSetupData memory preparedSetupData) {
         // Decode incoming params
         (
-            string memory _firstBlockContentUri,
+            string memory _firstBlockEditsContentUri,
+            bytes memory _firstBlockEditsMetadata,
             address _predecessorAddress,
             address _pluginUpgrader
         ) = decodeInstallationParams(_data);
@@ -43,7 +44,12 @@ contract SpacePluginSetup is PluginSetup {
             pluginImplementation,
             abi.encodeCall(
                 SpacePlugin.initialize,
-                (IDAO(_dao), _firstBlockContentUri, _predecessorAddress)
+                (
+                    IDAO(_dao),
+                    _firstBlockEditsContentUri,
+                    _firstBlockEditsMetadata,
+                    _predecessorAddress
+                )
             )
         );
 
@@ -143,11 +149,18 @@ contract SpacePluginSetup is PluginSetup {
 
     /// @notice Encodes the given installation parameters into a byte array
     function encodeInstallationParams(
-        string memory _firstBlockContentUri,
+        string memory _firstBlockEditsContentUri,
+        bytes memory _firstBlockEditsMetadata,
         address _predecessorAddress,
         address _pluginUpgrader
     ) public pure returns (bytes memory) {
-        return abi.encode(_firstBlockContentUri, _predecessorAddress, _pluginUpgrader);
+        return
+            abi.encode(
+                _firstBlockEditsContentUri,
+                _firstBlockEditsMetadata,
+                _predecessorAddress,
+                _pluginUpgrader
+            );
     }
 
     /// @notice Decodes the given byte array into the original installation parameters
@@ -157,15 +170,18 @@ contract SpacePluginSetup is PluginSetup {
         public
         pure
         returns (
-            string memory firstBlockContentUri,
+            string memory firstBlockEditsContentUri,
+            bytes memory firstBlockEditsMetadata,
             address predecessorAddress,
             address pluginUpgrader
         )
     {
-        (firstBlockContentUri, predecessorAddress, pluginUpgrader) = abi.decode(
-            _data,
-            (string, address, address)
-        );
+        (
+            firstBlockEditsContentUri,
+            firstBlockEditsMetadata,
+            predecessorAddress,
+            pluginUpgrader
+        ) = abi.decode(_data, (string, bytes, address, address));
     }
 
     /// @notice Encodes the given uninstallation parameters into a byte array
