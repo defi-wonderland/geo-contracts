@@ -89,6 +89,8 @@ contract SpacePlugin is PluginUUPSUpgradeable {
     /// @notice Sets the payer address for the Space DAO.
     /// @param _payer The address authorized to create payments on behalf of the DAO.
     function setPayer(address _payer) external auth(PAYER_PERMISSION_ID) {
+        if (_payer == payer) return;
+
         payer = _payer;
         emit PayerSet(address(dao()), _payer);
     }
