@@ -6,6 +6,7 @@ import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID} from "../constants.sol";
 
 bytes4 constant SPACE_INTERFACE_ID = SpacePlugin.initialize.selector ^
     SpacePlugin.publishEdits.selector ^
+    SpacePlugin.flagContent.selector ^
     SpacePlugin.acceptSubspace.selector ^
     SpacePlugin.removeSubspace.selector;
 
@@ -14,8 +15,13 @@ bytes4 constant SPACE_INTERFACE_ID = SpacePlugin.initialize.selector ^
 contract SpacePlugin is PluginUUPSUpgradeable {
     /// @notice Emitted when the contents of a space change.
     /// @param dao The address of the DAO where this proposal was executed.
-    /// @param contentUri An IPFS URI pointing to the new contents behind the block's item.
-    event EditsPublished(address dao, string contentUri);
+    /// @param editsContentUri An IPFS URI pointing to the new contents behind the block's item.
+    event EditsPublished(address dao, string editsContentUri);
+
+    /// @notice Emitted when a content is flagged.
+    /// @param dao The address of the DAO where this proposal was executed.
+    /// @param flagContentUri An IPFS URI pointing to the content being flagged.
+    event ContentFlagged(address dao, string flagContentUri);
 
     /// @notice Announces that the current space plugin is the successor of an already existing Space
     /// @param dao The address of the DAO where this proposal was executed.
@@ -46,7 +52,7 @@ contract SpacePlugin is PluginUUPSUpgradeable {
         if (_predecessorSpace != address(0)) {
             emit SuccessorSpaceCreated(address(dao()), _predecessorSpace);
         }
-        emit EditsPublished({dao: address(dao()), contentUri: _firstContentUri});
+        emit EditsPublished({dao: address(dao()), editsContentUri: _firstContentUri});
     }
 
     /// @notice Checks if this or the parent contract supports an interface by its ID.
@@ -59,9 +65,15 @@ contract SpacePlugin is PluginUUPSUpgradeable {
     }
 
     /// @notice Emits an event with new contents for the given block index. Caller needs CONTENT_PERMISSION.
-    /// @param _contentUri An IPFS URI pointing to the new contents behind the block's item.
-    function publishEdits(string memory _contentUri) external auth(CONTENT_PERMISSION_ID) {
-        emit EditsPublished({dao: address(dao()), contentUri: _contentUri});
+    /// @param _editsContentUri An IPFS URI pointing to the new contents behind the block's item.
+    function publishEdits(string memory _editsContentUri) external auth(CONTENT_PERMISSION_ID) {
+        emit EditsPublished({dao: address(dao()), editsContentUri: _editsContentUri});
+    }
+
+    /// @notice Emits an event when the content is flagged. Caller needs CONTENT_PERMISSION.
+    /// @param _flagContentUri An IPFS URI pointing to the content being flagged.
+    function flagContent(string memory _flagContentUri) external auth(CONTENT_PERMISSION_ID) {
+        emit ContentFlagged({dao: address(dao()), flagContentUri: _flagContentUri});
     }
 
     /// @notice Emits an event accepting another DAO as a subspace. Caller needs CONTENT_PERMISSION.
