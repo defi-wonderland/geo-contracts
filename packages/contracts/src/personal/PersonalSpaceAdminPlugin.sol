@@ -243,7 +243,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     ///      on the target SpacePlugin. It must be executed via the DAO governance process.
     /// @param _payer The address that will be authorized to create payments on behalf of the given Space plugin.
     /// @param _spacePlugin The address of the space plugin where changes will be executed.
-    function submitSetPayer(address _payer, address _spacePlugin) public {
+    function submitSetPayer(address _payer, address _spacePlugin) public onlyMembers {
         IDAO.Action[] memory _actions = new IDAO.Action[](1);
 
         _actions[0].to = _spacePlugin;

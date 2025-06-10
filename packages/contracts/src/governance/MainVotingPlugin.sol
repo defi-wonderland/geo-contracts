@@ -596,7 +596,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         bytes calldata _metadataContentUri,
         address _proposedPayer,
         address _spacePlugin
-    ) public returns (uint256 proposalId) {
+    ) public onlyMembers returns (uint256 proposalId) {
         if (_proposedPayer == address(0) || _spacePlugin == address(0)) {
             revert EmptyContent();
         }
