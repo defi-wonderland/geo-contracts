@@ -13,6 +13,8 @@ import {upgrades} from 'hardhat';
 
 export type NetworkNameMapping = {[index: string]: string};
 
+export type NetworkBlockNumberMapping = {[index: string]: number};
+
 export type ContractList = {[index: string]: {[index: string]: string}};
 
 export type ContractBlockNumberList = {

@@ -32,8 +32,6 @@ if (!process.env.PRIVATE_KEY) {
 }
 
 const {
-  // NETWORK_NAME,
-  INFURA_API_KEY,
   MANAGING_DAO_ADDRESS,
   PLUGIN_SETUP_PROCESSOR_ADDRESS,
   GOVERNANCE_PLUGIN_REPO_ADDRESS,
@@ -53,21 +51,12 @@ const MGMT_DAO_INITIAL_EDITORS = process.env.MGMT_DAO_INITIAL_EDITORS
   ? process.env.MGMT_DAO_INITIAL_EDITORS.split(',')
   : ([] as string[]);
 
-// @TODO:
-// Make jsonrpc provider
-// const infuraProvider = new providers.InfuraProvider(
-//   NETWORK_NAME,
-//   INFURA_API_KEY
-// );
-
 const rollupProvider = new providers.JsonRpcProvider(DEPLOYMENT_RPC_ENDPOINT);
 
 const deployer = new Wallet(process.env.PRIVATE_KEY!).connect(rollupProvider);
 
 async function main() {
   if (
-    // !NETWORK_NAME ||
-    // !INFURA_API_KEY ||
     !DEPLOYMENT_RPC_ENDPOINT ||
     !MANAGING_DAO_ADDRESS ||
     !PLUGIN_SETUP_PROCESSOR_ADDRESS ||
