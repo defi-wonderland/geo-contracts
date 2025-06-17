@@ -48,6 +48,7 @@ export const psvpInterface = new ethers.utils.Interface([
   'function initialize(address, address)',
   'function executeProposal(bytes,tuple(address,uint256,bytes)[],uint256)',
   'function submitEdits(string, address)',
+  'function submitFlagContent(string, address)',
   'function submitAcceptSubspace(address _subspaceDao, address _spacePlugin)',
   'function submitRemoveSubspace(address _subspaceDao, address _spacePlugin)',
   'function submitNewEditor(address _newEditor)',
@@ -265,6 +266,11 @@ describe('Personal Space Admin Plugin', function () {
         await expect(
           personalSpaceVotingPlugin
             .connect(account)
+            .submitFlagContent('ipfs://', spacePlugin.address)
+        ).to.not.be.reverted;
+        await expect(
+          personalSpaceVotingPlugin
+            .connect(account)
             .submitAcceptSubspace(ADDRESS_TWO, spacePlugin.address)
         ).to.not.be.reverted;
         await expect(
@@ -274,7 +280,7 @@ describe('Personal Space Admin Plugin', function () {
         ).to.not.be.reverted;
       }
       expect(await personalSpaceVotingPlugin.proposalCount()).to.equal(
-        BigNumber.from(6)
+        BigNumber.from(8)
       );
 
       // Non members
@@ -282,6 +288,13 @@ describe('Personal Space Admin Plugin', function () {
         personalSpaceVotingPlugin
           .connect(carol)
           .submitEdits('ipfs://', spacePlugin.address)
+      )
+        .to.be.revertedWithCustomError(personalSpaceVotingPlugin, 'NotAMember')
+        .withArgs(carol.address);
+      await expect(
+        personalSpaceVotingPlugin
+          .connect(carol)
+          .submitFlagContent('ipfs://', spacePlugin.address)
       )
         .to.be.revertedWithCustomError(personalSpaceVotingPlugin, 'NotAMember')
         .withArgs(carol.address);
