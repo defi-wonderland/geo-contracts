@@ -564,7 +564,8 @@ describe('Plugin upgrader', () => {
 
       // Install build 1
       const data1 = await pSetupBuild1.encodeInstallationParams(
-        '0x1234',
+        'ipfs://',
+        '0x',
         ADDRESS_ZERO,
         pluginUpgrader.address
       );
