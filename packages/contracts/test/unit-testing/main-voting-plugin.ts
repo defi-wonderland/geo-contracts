@@ -52,7 +52,7 @@ import {BigNumber} from 'ethers';
 import {toUtf8Bytes} from 'ethers/lib/utils';
 import {ethers} from 'hardhat';
 
-type InitData = {contentUri: string};
+type InitData = {contentUri: string; metadata: string};
 const mainVotingPluginInterface = MainVotingPlugin__factory.createInterface();
 const spacePluginInterface = SpacePlugin__factory.createInterface();
 
@@ -73,7 +73,7 @@ describe('Main Voting Plugin', function () {
     [alice, bob, carol, dave] = signers;
     dao = await deployTestDao(alice);
 
-    defaultInput = {contentUri: 'ipfs://'};
+    defaultInput = {contentUri: 'ipfs://', metadata: '0x'};
   });
 
   beforeEach(async () => {
@@ -100,6 +100,7 @@ describe('Main Voting Plugin', function () {
     await spacePlugin.initialize(
       dao.address,
       defaultInput.contentUri,
+      defaultInput.metadata,
       ADDRESS_ZERO
     );
 
@@ -339,6 +340,7 @@ describe('Main Voting Plugin', function () {
           .proposeEdits(
             toUtf8Bytes('ipfs://meta'),
             'ipfs://edits',
+            toUtf8Bytes('ipfs://edits-meta'),
             spacePlugin.address
           )
       ).to.not.be.reverted;
@@ -382,6 +384,7 @@ describe('Main Voting Plugin', function () {
           .proposeEdits(
             toUtf8Bytes('ipfs://meta'),
             'ipfs://edits',
+            toUtf8Bytes('ipfs://edits-meta'),
             spacePlugin.address
           )
       )
@@ -694,6 +697,7 @@ describe('Main Voting Plugin', function () {
         mainVotingPlugin.proposeEdits(
           toUtf8Bytes('ipfs://metadata'),
           'ipfs://edits-uri',
+          toUtf8Bytes('ipfs://edits-metadata'),
           spacePlugin.address
         )
       ).to.not.be.reverted;
@@ -706,6 +710,7 @@ describe('Main Voting Plugin', function () {
       expect(proposal.actions[0].data).to.eq(
         spacePluginInterface.encodeFunctionData('publishEdits', [
           'ipfs://edits-uri',
+          toUtf8Bytes('ipfs://edits-metadata'),
         ])
       );
 
@@ -716,6 +721,7 @@ describe('Main Voting Plugin', function () {
         mainVotingPlugin.proposeEdits(
           toUtf8Bytes('ipfs://more-metadata-here'),
           'ipfs://more-edits-uri',
+          toUtf8Bytes('ipfs://more-edits-metadata-here'),
           '0x5555555555666666666677777777778888888888'
         )
       ).to.not.be.reverted;
@@ -730,6 +736,7 @@ describe('Main Voting Plugin', function () {
       expect(proposal.actions[0].data).to.eq(
         spacePluginInterface.encodeFunctionData('publishEdits', [
           'ipfs://more-edits-uri',
+          toUtf8Bytes('ipfs://more-edits-metadata-here'),
         ])
       );
     });

@@ -15,7 +15,8 @@ contract SpacePlugin is PluginUUPSUpgradeable {
     /// @notice Emitted when the contents of a space change.
     /// @param dao The address of the DAO where this proposal was executed.
     /// @param contentUri An IPFS URI pointing to the new contents behind the block's item.
-    event EditsPublished(address dao, string contentUri);
+    /// @param editsMetadata The metadata associated with the new contents behind the block's item.
+    event EditsPublished(address dao, string contentUri, bytes editsMetadata);
 
     /// @notice Announces that the current space plugin is the successor of an already existing Space
     /// @param dao The address of the DAO where this proposal was executed.
@@ -34,11 +35,13 @@ contract SpacePlugin is PluginUUPSUpgradeable {
 
     /// @notice Initializes the plugin when build 1 is installed.
     /// @param _dao The address of the DAO to read the permissions from.
-    /// @param _firstContentUri A IPFS URI pointing to the contents of the first block's item (title).
-    /// @param _predecessorSpace Optionally, the address of the space contract preceding this one
+    /// @param _firstEditsContentUri An IPFS URI pointing to the contents of the first block's item (title).
+    /// @param _firstEditsMetadata The metadata associated with the contents of the first block's item (title).
+    /// @param _predecessorSpace Optionally, the address of the space contract preceding this one.
     function initialize(
         IDAO _dao,
-        string memory _firstContentUri,
+        string memory _firstEditsContentUri,
+        bytes memory _firstEditsMetadata,
         address _predecessorSpace
     ) external initializer {
         __PluginUUPSUpgradeable_init(_dao);
@@ -46,7 +49,11 @@ contract SpacePlugin is PluginUUPSUpgradeable {
         if (_predecessorSpace != address(0)) {
             emit SuccessorSpaceCreated(address(dao()), _predecessorSpace);
         }
-        emit EditsPublished({dao: address(dao()), contentUri: _firstContentUri});
+        emit EditsPublished({
+            dao: address(dao()),
+            contentUri: _firstEditsContentUri,
+            editsMetadata: _firstEditsMetadata
+        });
     }
 
     /// @notice Checks if this or the parent contract supports an interface by its ID.
@@ -60,8 +67,16 @@ contract SpacePlugin is PluginUUPSUpgradeable {
 
     /// @notice Emits an event with new contents for the given block index. Caller needs CONTENT_PERMISSION.
     /// @param _contentUri An IPFS URI pointing to the new contents behind the block's item.
-    function publishEdits(string memory _contentUri) external auth(CONTENT_PERMISSION_ID) {
-        emit EditsPublished({dao: address(dao()), contentUri: _contentUri});
+    /// @param _editsMetadata The metadata associated with the new contents behind the block's item.
+    function publishEdits(
+        string memory _contentUri,
+        bytes memory _editsMetadata
+    ) external auth(CONTENT_PERMISSION_ID) {
+        emit EditsPublished({
+            dao: address(dao()),
+            contentUri: _contentUri,
+            editsMetadata: _editsMetadata
+        });
     }
 
     /// @notice Emits an event accepting another DAO as a subspace. Caller needs CONTENT_PERMISSION.

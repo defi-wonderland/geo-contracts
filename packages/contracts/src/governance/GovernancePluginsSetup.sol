@@ -13,7 +13,6 @@ import {OnlyPluginUpgraderCondition} from "../conditions/OnlyPluginUpgraderCondi
 import {MainVotingPlugin} from "./MainVotingPlugin.sol";
 import {MajorityVotingBase} from "./base/MajorityVotingBase.sol";
 
-
 /// @title GovernancePluginsSetup
 /// @dev Release 1, Build 1
 contract GovernancePluginsSetup is PluginSetup {
