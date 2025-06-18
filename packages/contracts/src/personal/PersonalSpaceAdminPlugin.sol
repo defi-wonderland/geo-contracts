@@ -29,6 +29,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
             this.submitRemoveMember.selector ^
             this.submitNewEditor.selector ^
             this.submitRemoveEditor.selector ^
+            this.submitSetPayer.selector ^
             this.leaveSpace.selector;
 
     /// @notice Raised when a wallet who is not an editor or a member attempts to do something
@@ -263,6 +264,24 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
         dao().execute(bytes32(_proposalId), _actions, 0);
 
         emit EditorRemoved(address(dao()), _editor);
+    }
+
+    /// @notice Creates and executes a proposal that makes the DAO store the given address as the payer.
+    /// @dev This function wraps an action that, if approved, will set the payer
+    ///      on the target SpacePlugin. It must be executed via the DAO governance process.
+    /// @param _payer The address that will be authorized to create payments on behalf of the given Space plugin.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    function submitSetPayer(address _payer, address _spacePlugin) public onlyMembers {
+        IDAO.Action[] memory _actions = new IDAO.Action[](1);
+
+        _actions[0].to = _spacePlugin;
+        _actions[0].data = abi.encodeCall(SpacePlugin.setPayer, (_payer));
+
+        uint256 _proposalId = _createProposal(msg.sender, _actions);
+
+        dao().execute(bytes32(_proposalId), _actions, 0);
+
+        // The event will be emitted by the space plugin
     }
 
     // Internal helpers

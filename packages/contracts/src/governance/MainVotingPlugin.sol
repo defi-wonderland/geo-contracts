@@ -24,6 +24,7 @@ bytes4 constant MAIN_SPACE_VOTING_INTERFACE_ID = MainVotingPlugin.initialize.sel
     MainVotingPlugin.proposeRemoveMember.selector ^
     MainVotingPlugin.proposeAddEditor.selector ^
     MainVotingPlugin.proposeRemoveEditor.selector ^
+    MainVotingPlugin.proposeSetPayer.selector ^
     MainVotingPlugin.addEditor.selector ^
     MainVotingPlugin.removeEditor.selector ^
     MainVotingPlugin.addMember.selector ^
@@ -123,6 +124,24 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         uint64 endDate,
         bytes metadata,
         address indexed subspace,
+        address dao
+    );
+
+    /// @notice Emitted when a proposal to set the payer is created.
+    /// @param proposalId The ID of the created proposal.
+    /// @param creator The address of the account that created the proposal.
+    /// @param startDate The timestamp when voting starts.
+    /// @param endDate The timestamp when voting ends.
+    /// @param metadata The metadata associated with the proposal.
+    /// @param payer The address proposed to be authorized for creating payments.
+    /// @param dao The address of the DAO.
+    event SetPayerProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed payer,
         address dao
     );
 
@@ -374,9 +393,10 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
 
     /// @notice Creates and executes a proposal that makes the DAO emit new content on the given space.
     /// @param _metadataContentUri The metadata of the proposal.
-    /// @param _editsContentUri The URI of the IPFS content to publish
+    /// @param _editsContentUri The URI of the IPFS content to publish.
     /// @param _editsMetadata The metadata of the edits to publish.
-    /// @param _spacePlugin The address of the space plugin where changes will be executed
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    /// @return proposalId The ID of the created proposal.
     function proposeEdits(
         bytes calldata _metadataContentUri,
         string memory _editsContentUri,
@@ -439,8 +459,9 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
 
     /// @notice Creates a proposal to make the DAO accept the given DAO as a subspace.
     /// @param _metadataContentUri The metadata of the proposal.
-    /// @param _subspaceDao The address of the DAO that holds the new subspace
-    /// @param _spacePlugin The address of the space plugin where changes will be executed
+    /// @param _subspaceDao The address of the DAO that holds the new subspace.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    /// @return proposalId The ID of the created proposal.
     function proposeAcceptSubspace(
         bytes calldata _metadataContentUri,
         IDAO _subspaceDao,
@@ -471,8 +492,9 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
 
     /// @notice Creates a proposal to make the DAO remove the given DAO as a subspace.
     /// @param _metadataContentUri The metadata of the proposal.
-    /// @param _subspaceDao The address of the DAO that holds the subspace to remove
-    /// @param _spacePlugin The address of the space plugin where changes will be executed
+    /// @param _subspaceDao The address of the DAO that holds the subspace to remove.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    /// @return proposalId The ID of the created proposal.
     function proposeRemoveSubspace(
         bytes calldata _metadataContentUri,
         IDAO _subspaceDao,
@@ -522,6 +544,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @notice Creates a proposal to remove an existing member.
     /// @param _metadataContentUri The metadata of the proposal.
     /// @param _member The address of the member who may eveutnally be removed.
+    /// @return proposalId The ID of the created proposal.
     function proposeRemoveMember(
         bytes calldata _metadataContentUri,
         address _member
@@ -554,6 +577,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @notice Creates a proposal to remove an existing member.
     /// @param _metadataContentUri The metadata of the proposal.
     /// @param _proposedEditor The address of the wallet who may eveutnally be made an editor.
+    /// @return proposalId The ID of the created proposal.
     function proposeAddEditor(
         bytes calldata _metadataContentUri,
         address _proposedEditor
@@ -584,6 +608,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @notice Creates a proposal to remove an existing editor.
     /// @param _metadataContentUri The metadata of the proposal.
     /// @param _editor The address of the editor who may eveutnally be removed.
+    /// @return proposalId The ID of the created proposal.
     function proposeRemoveEditor(
         bytes calldata _metadataContentUri,
         address _editor
@@ -611,6 +636,41 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         );
     }
 
+    /// @notice Creates a proposal to assign a payer for a given Space DAO.
+    /// @dev This function wraps an action that, if approved, will set the payer
+    ///      on the target SpacePlugin. It must be executed via the DAO governance process.
+    /// @param _metadataContentUri The metadata associated with the proposal (e.g. IPFS URI).
+    /// @param _proposedPayer The address that will be authorized to create payments on behalf of the given Space plugin.
+    /// @param _spacePlugin The address of the Space plugin whose payer will be updated.
+    /// @return proposalId The ID of the created proposal.
+    function proposeSetPayer(
+        bytes calldata _metadataContentUri,
+        address _proposedPayer,
+        address _spacePlugin
+    ) public onlyMembers returns (uint256 proposalId) {
+        if (_proposedPayer == address(0) || _spacePlugin == address(0)) {
+            revert EmptyContent();
+        }
+
+        proposalId = _proposeWrappedAction(
+            _metadataContentUri,
+            _spacePlugin,
+            abi.encodeCall(SpacePlugin.setPayer, (_proposedPayer))
+        );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit SetPayerProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            _proposedPayer,
+            address(dao())
+        );
+    }
+
     /// @notice Cancels the given proposal. It can only be called by the creator and the proposal must have not ended.
     function cancelProposal(uint256 _proposalId) external {
         if (proposalCreators[_proposalId] != msg.sender) {
@@ -630,6 +690,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @param _metadataContentUri The IPFS URI of the metadata.
     /// @param _to The contract to call with the action.
     /// @param _data The calldata to eventually invoke.
+    /// @return proposalId The ID of the created proposal.
     function _proposeWrappedAction(
         bytes memory _metadataContentUri,
         address _to,
