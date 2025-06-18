@@ -17,6 +17,7 @@ import {SpacePlugin} from "../space/SpacePlugin.sol";
 bytes4 constant MAIN_SPACE_VOTING_INTERFACE_ID = MainVotingPlugin.initialize.selector ^
     MainVotingPlugin.createProposal.selector ^
     MainVotingPlugin.proposeEdits.selector ^
+    MainVotingPlugin.proposeFlagContent.selector ^
     MainVotingPlugin.proposeAcceptSubspace.selector ^
     MainVotingPlugin.proposeRemoveSubspace.selector ^
     MainVotingPlugin.proposeAddMember.selector ^
@@ -56,7 +57,23 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         address indexed creator,
         uint64 startDate,
         uint64 endDate,
-        string contentUri,
+        string editsContentUri,
+        address dao
+    );
+
+    /// @notice Emitted when a new flag content proposal is created.
+    /// @param proposalId Unique identifier of the proposal.
+    /// @param creator Address of the user that created the proposal.
+    /// @param startDate The timestamp when the proposal becomes active.
+    /// @param endDate The timestamp when the proposal ends.
+    /// @param flagContentUri URI pointing to the proposal's content that will be flagged.
+    /// @param dao Address of the DAO associated with the proposal.
+    event FlagContentProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        string flagContentUri,
         address dao
     );
 
@@ -377,11 +394,13 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     /// @notice Creates and executes a proposal that makes the DAO emit new content on the given space.
     /// @param _metadataContentUri The metadata of the proposal.
     /// @param _editsContentUri The URI of the IPFS content to publish.
+    /// @param _editsMetadata The metadata of the edits to publish.
     /// @param _spacePlugin The address of the space plugin where changes will be executed.
     /// @return proposalId The ID of the created proposal.
     function proposeEdits(
         bytes calldata _metadataContentUri,
         string memory _editsContentUri,
+        bytes memory _editsMetadata,
         address _spacePlugin
     ) public onlyMembers returns (uint256 proposalId) {
         if (_spacePlugin == address(0)) {
@@ -391,7 +410,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         proposalId = _proposeWrappedAction(
             _metadataContentUri,
             _spacePlugin,
-            abi.encodeCall(SpacePlugin.publishEdits, (_editsContentUri))
+            abi.encodeCall(SpacePlugin.publishEdits, (_editsContentUri, _editsMetadata))
         );
 
         Proposal storage proposal_ = proposals[proposalId];
@@ -402,6 +421,38 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             proposal_.parameters.startDate,
             proposal_.parameters.endDate,
             _editsContentUri,
+            address(dao())
+        );
+    }
+
+    /// @notice Creates and executes a proposal that makes the DAO emit flag content on the given space.
+    /// @param _metadataContentUri The metadata of the proposal.
+    /// @param _flagContentUri The URI of the IPFS content to flag.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    /// @return proposalId The ID of the created proposal.
+    function proposeFlagContent(
+        bytes calldata _metadataContentUri,
+        string memory _flagContentUri,
+        address _spacePlugin
+    ) public onlyMembers returns (uint256 proposalId) {
+        if (_spacePlugin == address(0)) {
+            revert EmptyContent();
+        }
+
+        proposalId = _proposeWrappedAction(
+            _metadataContentUri,
+            _spacePlugin,
+            abi.encodeCall(SpacePlugin.flagContent, (_flagContentUri))
+        );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit FlagContentProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _flagContentUri,
             address(dao())
         );
     }
