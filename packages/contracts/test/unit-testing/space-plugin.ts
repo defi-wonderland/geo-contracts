@@ -132,6 +132,26 @@ describe('Space Plugin', function () {
       .withArgs(dao.address, 'hello', '0x1234');
   });
 
+  it('The Space plugin emits an event when the content is flagged', async () => {
+    // Fails by default
+    await expect(spacePlugin.connect(alice).flagContent('hello'))
+      .to.be.revertedWithCustomError(spacePlugin, 'DaoUnauthorized')
+      .withArgs(
+        dao.address,
+        spacePlugin.address,
+        alice.address,
+        CONTENT_PERMISSION_ID
+      );
+
+    // Grant
+    await dao.grant(spacePlugin.address, alice.address, CONTENT_PERMISSION_ID);
+
+    // Set content
+    await expect(spacePlugin.connect(alice).flagContent('hello'))
+      .to.emit(spacePlugin, 'ContentFlagged')
+      .withArgs(dao.address, 'hello');
+  });
+
   it('The Space plugin emits an event when a subspace is accepted', async () => {
     // Fails by default
     await expect(spacePlugin.connect(alice).acceptSubspace(ADDRESS_TWO))
@@ -187,7 +207,7 @@ describe('Space Plugin', function () {
         .then(tx => tx.wait());
     });
 
-    it('Only the DAO can emit content on the space plugin', async () => {
+    it('Only the DAO can emit new contents on the space plugin', async () => {
       // They cannot
       await expect(spacePlugin.connect(alice).publishEdits('hello', '0x1234'))
         .to.be.reverted;
@@ -211,6 +231,32 @@ describe('Space Plugin', function () {
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'EditsPublished')
         .withArgs(dao.address, 'hello', '0x1234');
+    });
+
+    it('Only the DAO can flag content on the space plugin', async () => {
+      // They cannot
+      await expect(spacePlugin.connect(alice).flagContent('0x1234')).to.be
+        .reverted;
+      await expect(spacePlugin.connect(bob).flagContent('0x1234')).to.be
+        .reverted;
+      await expect(spacePlugin.connect(carol).flagContent('0x1234')).to.be
+        .reverted;
+
+      // The DAO can
+      const actions: IDAO.ActionStruct[] = [
+        {
+          to: spacePlugin.address,
+          value: 0,
+          data: SpacePlugin__factory.createInterface().encodeFunctionData(
+            'flagContent',
+            ['0x1234']
+          ),
+        },
+      ];
+
+      await expect(dao.execute(ZERO_BYTES32, actions, 0))
+        .to.emit(spacePlugin, 'ContentFlagged')
+        .withArgs(dao.address, '0x1234');
     });
 
     it('Only the DAO can accept subspaces', async () => {

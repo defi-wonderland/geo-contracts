@@ -349,6 +349,20 @@ describe('Main Voting Plugin', function () {
         BigNumber.from(1)
       );
 
+      await expect(
+        mainVotingPlugin
+          .connect(alice)
+          .proposeFlagContent(
+            toUtf8Bytes('ipfs://meta'),
+            'ipfs://flag',
+            spacePlugin.address
+          )
+      ).to.not.be.reverted;
+
+      expect(await mainVotingPlugin.proposalCount()).to.equal(
+        BigNumber.from(2)
+      );
+
       expect(await mainVotingPlugin.isMember(bob.address)).to.be.true;
       await expect(
         mainVotingPlugin
@@ -361,7 +375,7 @@ describe('Main Voting Plugin', function () {
       ).to.not.be.reverted;
 
       expect(await mainVotingPlugin.proposalCount()).to.equal(
-        BigNumber.from(2)
+        BigNumber.from(3)
       );
 
       await expect(
@@ -375,7 +389,7 @@ describe('Main Voting Plugin', function () {
       ).to.not.be.reverted;
 
       expect(await mainVotingPlugin.proposalCount()).to.equal(
-        BigNumber.from(3)
+        BigNumber.from(4)
       );
 
       await expect(
@@ -385,6 +399,18 @@ describe('Main Voting Plugin', function () {
             toUtf8Bytes('ipfs://meta'),
             'ipfs://edits',
             toUtf8Bytes('ipfs://edits-meta'),
+            spacePlugin.address
+          )
+      )
+        .to.be.revertedWithCustomError(mainVotingPlugin, 'NotAMember')
+        .withArgs(carol.address);
+
+      await expect(
+        mainVotingPlugin
+          .connect(carol)
+          .proposeFlagContent(
+            toUtf8Bytes('ipfs://meta'),
+            'ipfs://flag',
             spacePlugin.address
           )
       )
@@ -737,6 +763,54 @@ describe('Main Voting Plugin', function () {
         spacePluginInterface.encodeFunctionData('publishEdits', [
           'ipfs://more-edits-uri',
           toUtf8Bytes('ipfs://more-edits-metadata-here'),
+        ])
+      );
+    });
+
+    it('proposeFlagContent creates a proposal with the right values', async () => {
+      let pid = 0;
+
+      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(0);
+      await expect(
+        mainVotingPlugin.proposeFlagContent(
+          toUtf8Bytes('ipfs://metadata'),
+          'ipfs://flag-uri',
+          spacePlugin.address
+        )
+      ).to.not.be.reverted;
+      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(1);
+
+      let proposal = await mainVotingPlugin.getProposal(pid);
+      expect(proposal.actions.length).to.eq(1);
+      expect(proposal.actions[0].to).to.eq(spacePlugin.address);
+      expect(proposal.actions[0].value.toNumber()).to.eq(0);
+      expect(proposal.actions[0].data).to.eq(
+        spacePluginInterface.encodeFunctionData('flagContent', [
+          'ipfs://flag-uri',
+        ])
+      );
+
+      // 2
+      pid++;
+
+      await expect(
+        mainVotingPlugin.proposeFlagContent(
+          toUtf8Bytes('ipfs://more-metadata-here'),
+          'ipfs://more-flag-uri',
+          '0x5555555555666666666677777777778888888888'
+        )
+      ).to.not.be.reverted;
+      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(2);
+
+      proposal = await mainVotingPlugin.getProposal(pid);
+      expect(proposal.actions.length).to.eq(1);
+      expect(proposal.actions[0].to).to.eq(
+        '0x5555555555666666666677777777778888888888'
+      );
+      expect(proposal.actions[0].value.toNumber()).to.eq(0);
+      expect(proposal.actions[0].data).to.eq(
+        spacePluginInterface.encodeFunctionData('flagContent', [
+          'ipfs://more-flag-uri',
         ])
       );
     });
