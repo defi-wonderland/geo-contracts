@@ -40,14 +40,15 @@ import {expect} from 'chai';
 import {BigNumber} from 'ethers';
 import {ethers} from 'hardhat';
 
-export type InitData = {contentUri: string};
+export type InitData = {contentUri: string; metadata: string};
 export const defaultInitData: InitData = {
   contentUri: 'ipfs://',
+  metadata: '0x',
 };
 export const psvpInterface = new ethers.utils.Interface([
   'function initialize(address, address)',
   'function executeProposal(bytes,tuple(address,uint256,bytes)[],uint256)',
-  'function submitEdits(string, address)',
+  'function submitEdits(string, bytes, address)',
   'function submitFlagContent(string, address)',
   'function submitAcceptSubspace(address _subspaceDao, address _spacePlugin)',
   'function submitRemoveSubspace(address _subspaceDao, address _spacePlugin)',
@@ -74,7 +75,7 @@ describe('Personal Space Admin Plugin', function () {
     [alice, bob, carol] = await ethers.getSigners();
     dao = await deployTestDao(alice);
 
-    defaultInput = {contentUri: 'ipfs://'};
+    defaultInput = {contentUri: 'ipfs://', metadata: '0x'};
     dummyActions = [
       {
         to: alice.address,
@@ -100,6 +101,7 @@ describe('Personal Space Admin Plugin', function () {
     await spacePlugin.initialize(
       dao.address,
       defaultInput.contentUri,
+      defaultInput.metadata,
       ADDRESS_ZERO
     );
 
@@ -220,7 +222,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(bob)
-          .executeProposal('0x', dummyActions, 0)
+          .executeProposal(dummyMetadata, dummyActions, 0)
       )
         .to.be.revertedWithCustomError(
           personalSpaceVotingPlugin,
@@ -235,7 +237,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(carol)
-          .executeProposal('0x', dummyActions, 0)
+          .executeProposal(dummyMetadata, dummyActions, 0)
       )
         .to.be.revertedWithCustomError(
           personalSpaceVotingPlugin,
@@ -252,7 +254,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', dummyActions, 0)
+          .executeProposal(dummyMetadata, dummyActions, 0)
       ).to.emit(personalSpaceVotingPlugin, 'ProposalCreated');
     });
 
@@ -261,7 +263,7 @@ describe('Personal Space Admin Plugin', function () {
         await expect(
           personalSpaceVotingPlugin
             .connect(account)
-            .submitEdits('ipfs://', spacePlugin.address)
+            .submitEdits('ipfs://', '0x', spacePlugin.address)
         ).to.not.be.reverted;
         await expect(
           personalSpaceVotingPlugin
@@ -287,7 +289,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(carol)
-          .submitEdits('ipfs://', spacePlugin.address)
+          .submitEdits('ipfs://', '0x', spacePlugin.address)
       )
         .to.be.revertedWithCustomError(personalSpaceVotingPlugin, 'NotAMember')
         .withArgs(carol.address);
@@ -389,7 +391,7 @@ describe('Personal Space Admin Plugin', function () {
     it('Proposal execution is immediate', async () => {
       const data = SpacePlugin__factory.createInterface().encodeFunctionData(
         'publishEdits',
-        ['0x']
+        ['ipfs://', '0x']
       );
       const actions = [
         {
@@ -401,17 +403,17 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actions, 0)
+          .executeProposal(dummyMetadata, actions, 0)
       )
         .to.emit(spacePlugin, 'EditsPublished')
-        .withArgs(dao.address, '0x');
+        .withArgs(dao.address, 'ipfs://', '0x');
     });
 
     it('Executed content proposals emit an event', async () => {
       // Encode an action to change some content
       const data = SpacePlugin__factory.createInterface().encodeFunctionData(
         'publishEdits',
-        ['0x']
+        ['ipfs://', '0x']
       );
       const actions = [
         {
@@ -424,7 +426,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actions, 0)
+          .executeProposal(dummyMetadata, actions, 0)
       ).to.emit(personalSpaceVotingPlugin, 'ProposalCreated');
 
       // ProposalExecuted is redundant and not emitted
@@ -432,10 +434,10 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actions, 0)
+          .executeProposal(dummyMetadata, actions, 0)
       )
         .to.emit(spacePlugin, 'EditsPublished')
-        .withArgs(dao.address, '0x');
+        .withArgs(dao.address, 'ipfs://', '0x');
     });
 
     it('Approved subspaces emit an event', async () => {
@@ -455,7 +457,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actions, 0)
+          .executeProposal(dummyMetadata, actions, 0)
       ).to.emit(personalSpaceVotingPlugin, 'ProposalCreated');
 
       // ProposalExecuted is redundant and not emitted
@@ -463,7 +465,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actions, 0)
+          .executeProposal(dummyMetadata, actions, 0)
       )
         .to.emit(spacePlugin, 'SubspaceAccepted')
         .withArgs(dao.address, ADDRESS_TWO);
@@ -494,13 +496,13 @@ describe('Personal Space Admin Plugin', function () {
 
       await personalSpaceVotingPlugin
         .connect(alice)
-        .executeProposal('0x', actionsAccept, 0);
+        .executeProposal(dummyMetadata, actionsAccept, 0);
 
       // remove
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actionsRemove, 0)
+          .executeProposal(dummyMetadata, actionsRemove, 0)
       ).to.emit(personalSpaceVotingPlugin, 'ProposalCreated');
 
       // ProposalExecuted is redundant and not emitted
@@ -508,7 +510,7 @@ describe('Personal Space Admin Plugin', function () {
       await expect(
         personalSpaceVotingPlugin
           .connect(alice)
-          .executeProposal('0x', actionsRemove, 0)
+          .executeProposal(dummyMetadata, actionsRemove, 0)
       )
         .to.emit(spacePlugin, 'SubspaceRemoved')
         .withArgs(dao.address, ADDRESS_TWO);

@@ -14,9 +14,10 @@ import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {expect} from 'chai';
 import {ethers} from 'hardhat';
 
-export type InitData = {contentUri: string};
+export type InitData = {contentUri: string; metadata: string};
 export const defaultInitData: InitData = {
   contentUri: 'ipfs://',
+  metadata: '0x',
 };
 
 describe('Space Plugin', function () {
@@ -31,7 +32,7 @@ describe('Space Plugin', function () {
     [alice, bob, carol] = await ethers.getSigners();
     dao = await deployTestDao(alice);
 
-    defaultInput = {contentUri: 'ipfs://'};
+    defaultInput = {contentUri: 'ipfs://', metadata: '0x'};
   });
 
   beforeEach(async () => {
@@ -42,6 +43,7 @@ describe('Space Plugin', function () {
     await spacePlugin.initialize(
       dao.address,
       defaultInput.contentUri,
+      defaultInput.metadata,
       ADDRESS_ZERO
     );
   });
@@ -52,6 +54,7 @@ describe('Space Plugin', function () {
         spacePlugin.initialize(
           dao.address,
           defaultInput.contentUri,
+          defaultInput.metadata,
           ADDRESS_ZERO
         )
       ).to.be.revertedWith('Initializable: contract is already initialized');
@@ -66,11 +69,12 @@ describe('Space Plugin', function () {
         spacePlugin.initialize(
           dao.address,
           defaultInput.contentUri,
+          defaultInput.metadata,
           ADDRESS_ZERO
         )
       )
         .to.emit(spacePlugin, 'EditsPublished')
-        .withArgs(dao.address, defaultInput.contentUri);
+        .withArgs(dao.address, defaultInput.contentUri, defaultInput.metadata);
     });
 
     it('Should emit a successor space event', async () => {
@@ -83,6 +87,7 @@ describe('Space Plugin', function () {
         spacePlugin.initialize(
           dao.address,
           defaultInput.contentUri,
+          defaultInput.metadata,
           ADDRESS_ONE
         )
       )
@@ -98,6 +103,7 @@ describe('Space Plugin', function () {
         spacePlugin.initialize(
           dao.address,
           defaultInput.contentUri,
+          defaultInput.metadata,
           ADDRESS_TWO
         )
       )
@@ -108,7 +114,7 @@ describe('Space Plugin', function () {
 
   it('The Space plugin emits an event when new edits are published', async () => {
     // Fails by default
-    await expect(spacePlugin.connect(alice).publishEdits('hello'))
+    await expect(spacePlugin.connect(alice).publishEdits('hello', '0x1234'))
       .to.be.revertedWithCustomError(spacePlugin, 'DaoUnauthorized')
       .withArgs(
         dao.address,
@@ -121,9 +127,9 @@ describe('Space Plugin', function () {
     await dao.grant(spacePlugin.address, alice.address, CONTENT_PERMISSION_ID);
 
     // Set content
-    await expect(spacePlugin.connect(alice).publishEdits('hello'))
+    await expect(spacePlugin.connect(alice).publishEdits('hello', '0x1234'))
       .to.emit(spacePlugin, 'EditsPublished')
-      .withArgs(dao.address, 'hello');
+      .withArgs(dao.address, 'hello', '0x1234');
   });
 
   it('The Space plugin emits an event when the content is flagged', async () => {
@@ -203,12 +209,12 @@ describe('Space Plugin', function () {
 
     it('Only the DAO can emit new contents on the space plugin', async () => {
       // They cannot
-      await expect(spacePlugin.connect(alice).publishEdits('0x1234')).to.be
-        .reverted;
-      await expect(spacePlugin.connect(bob).publishEdits('0x1234')).to.be
-        .reverted;
-      await expect(spacePlugin.connect(carol).publishEdits('0x1234')).to.be
-        .reverted;
+      await expect(spacePlugin.connect(alice).publishEdits('hello', '0x1234'))
+        .to.be.reverted;
+      await expect(spacePlugin.connect(bob).publishEdits('hello', '0x1234')).to
+        .be.reverted;
+      await expect(spacePlugin.connect(carol).publishEdits('hello', '0x1234'))
+        .to.be.reverted;
 
       // The DAO can
       const actions: IDAO.ActionStruct[] = [
@@ -217,14 +223,14 @@ describe('Space Plugin', function () {
           value: 0,
           data: SpacePlugin__factory.createInterface().encodeFunctionData(
             'publishEdits',
-            ['0x1234']
+            ['hello', '0x1234']
           ),
         },
       ];
 
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'EditsPublished')
-        .withArgs(dao.address, '0x1234');
+        .withArgs(dao.address, 'hello', '0x1234');
     });
 
     it('Only the DAO can flag content on the space plugin', async () => {

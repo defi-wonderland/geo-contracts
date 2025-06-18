@@ -95,13 +95,21 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     }
 
     /// @notice Creates and executes a proposal that makes the DAO emit new content on the given space.
-    /// @param _contentUri The URI of the IPFS content to publish
-    /// @param _spacePlugin The address of the space plugin where changes will be executed
-    function submitEdits(string memory _contentUri, address _spacePlugin) public onlyMembers {
+    /// @param _editsContentUri The URI of the IPFS content to publish.
+    /// @param _editsMetadata The metadata of the edits to publish.
+    /// @param _spacePlugin The address of the space plugin where changes will be executed.
+    function submitEdits(
+        string memory _editsContentUri,
+        bytes memory _editsMetadata,
+        address _spacePlugin
+    ) public onlyMembers {
         IDAO.Action[] memory _actions = new IDAO.Action[](1);
 
         _actions[0].to = _spacePlugin;
-        _actions[0].data = abi.encodeCall(SpacePlugin.publishEdits, (_contentUri));
+        _actions[0].data = abi.encodeCall(
+            SpacePlugin.publishEdits,
+            (_editsContentUri, _editsMetadata)
+        );
 
         uint256 _proposalId = _createProposal(msg.sender, _actions);
 
