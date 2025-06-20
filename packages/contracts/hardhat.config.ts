@@ -28,7 +28,7 @@ const blockNumbers: NetworkBlockNumberMapping = {
   mainnet: 21900000,
   sepolia: 7777777,
   polygon: 68000000,
-  conduit: 15000,
+  conduit: 500,
 };
 
 export const networks: {[index: string]: NetworkUserConfig} = {
@@ -38,7 +38,7 @@ export const networks: {[index: string]: NetworkUserConfig} = {
       url: apiUrls.conduit,
       blockNumber:
         blockNumbers[
-          process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'mainnet'
+          process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'conduit'
         ],
     },
   },
