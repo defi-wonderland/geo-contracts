@@ -63,6 +63,32 @@ export function getPluginRepoFactoryAddress(networkName: string): string {
   return pluginRepoFactoryAddr;
 }
 
+export function getPluginRepoRegistryAddress(networkName: string): string {
+  let pluginRepoRegistryAddr: string;
+
+  if (
+    networkName === 'localhost' ||
+    networkName === 'hardhat' ||
+    networkName === 'coverage'
+  ) {
+    const hardhatForkNetwork = process.env.NETWORK_NAME ?? 'mainnet';
+
+    pluginRepoRegistryAddr =
+      osxContracts[hardhatForkNetwork].PluginRepoRegistry;
+    console.log(
+      `Using the "${hardhatForkNetwork}" PluginRepoRegistry address (${pluginRepoRegistryAddr}) for deployment testing on network "${networkName}"`
+    );
+  } else {
+    pluginRepoRegistryAddr =
+      osxContracts[networkNameMapping[networkName]].PluginRepoRegistry;
+
+    console.log(
+      `Using the ${networkNameMapping[networkName]} PluginRepoRegistry address (${pluginRepoRegistryAddr}) for deployment...`
+    );
+  }
+  return pluginRepoRegistryAddr;
+}
+
 export function getPluginSetupProcessorAddress(
   networkName: string,
   silent = false

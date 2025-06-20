@@ -26,7 +26,9 @@ const daoInterface = DAO__factory.createInterface();
 const mainVotingPluginInterface = MainVotingPlugin__factory.createInterface();
 
 describe('Member Access Condition', function () {
-  const pspAddress = getPluginSetupProcessorAddress(network.name, true);
+  const pspAddress = process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+    ? process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+    : getPluginSetupProcessorAddress(network.name, true);
 
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;

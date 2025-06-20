@@ -28,18 +28,17 @@ const blockNumbers: NetworkBlockNumberMapping = {
   mainnet: 21900000,
   sepolia: 7777777,
   polygon: 68000000,
+  conduit: 500,
 };
 
 export const networks: {[index: string]: NetworkUserConfig} = {
   hardhat: {
     chainId: 31337,
     forking: {
-      url: `${
-        apiUrls[process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'mainnet']
-      }${process.env.ALCHEMY_API_KEY}`,
+      url: apiUrls.conduit,
       blockNumber:
         blockNumbers[
-          process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'mainnet'
+          process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'conduit'
         ],
     },
   },
