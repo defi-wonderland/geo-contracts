@@ -25,7 +25,7 @@ describe('Space Plugin Setup', function () {
   let spacePluginSetup: SpacePluginSetup;
   let SpacePluginSetup: SpacePluginSetup__factory;
   let dao: DAO;
-  const defaultInitData = {contentUri: 'ipfs://'};
+  const defaultInitData = {contentUri: 'ipfs://', metadata: '0x'};
 
   before(async () => {
     [alice, bob] = await ethers.getSigners();
@@ -41,6 +41,7 @@ describe('Space Plugin Setup', function () {
     it('returns the plugin, helpers, and permissions (no pluginUpgrader)', async () => {
       const initData = await spacePluginSetup.encodeInstallationParams(
         defaultInitData.contentUri,
+        defaultInitData.metadata,
         ADDRESS_ZERO,
         ADDRESS_ZERO
       );
@@ -92,6 +93,7 @@ describe('Space Plugin Setup', function () {
       const pluginUpgrader = bob.address;
       const initData = await spacePluginSetup.encodeInstallationParams(
         defaultInitData.contentUri,
+        defaultInitData.metadata,
         ADDRESS_ZERO,
         pluginUpgrader
       );

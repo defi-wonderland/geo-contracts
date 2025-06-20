@@ -102,7 +102,8 @@ describe('SpacePluginSetup processing', function () {
     beforeEach(async () => {
       // Install build 1.
       const data = await setup.encodeInstallationParams(
-        '0x1234',
+        'ipfs://',
+        '0x',
         ADDRESS_ZERO,
         pluginUpgrader
       );
