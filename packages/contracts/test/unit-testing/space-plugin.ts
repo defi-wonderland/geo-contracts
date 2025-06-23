@@ -211,6 +211,8 @@ describe('Space Plugin', function () {
     await expect(spacePlugin.connect(alice).setPayer(ADDRESS_TWO))
       .to.emit(spacePlugin, 'PayerSet')
       .withArgs(dao.address, ADDRESS_TWO);
+
+    expect(await spacePlugin.payer()).to.eq(ADDRESS_TWO);
   });
 
   describe('Permissions', () => {
@@ -360,6 +362,8 @@ describe('Space Plugin', function () {
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'PayerSet')
         .withArgs(dao.address, ADDRESS_ONE);
+
+      expect(await spacePlugin.payer()).to.eq(ADDRESS_ONE);
     });
   });
 });
