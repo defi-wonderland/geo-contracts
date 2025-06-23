@@ -31,7 +31,9 @@ describe('Space Plugin Setup', function () {
     [alice, bob] = await ethers.getSigners();
     dao = await deployTestDao(alice);
 
-    const pspAddress = getPluginSetupProcessorAddress(network.name);
+    const pspAddress = process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      ? process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      : getPluginSetupProcessorAddress(network.name, true);
 
     SpacePluginSetup = new SpacePluginSetup__factory(alice);
     spacePluginSetup = await SpacePluginSetup.deploy(pspAddress);
