@@ -1,5 +1,8 @@
 # Geo Browser - Aragon OSx
 
+> [!CAUTION]
+> The code has not been audited yet—tread with caution.
+
 ## Deployment
 
 ### On a blockchain supported by Aragon
