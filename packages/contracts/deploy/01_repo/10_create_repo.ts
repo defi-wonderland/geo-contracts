@@ -3,7 +3,6 @@ import {
   PersonalSpaceAdminPluginSetupParams,
   SpacePluginSetupParams,
 } from '../../plugin-setup-params';
-import {isLocalChain} from '../../utils/hardhat';
 import {
   findEventTopicLog,
   getPluginRepoFactoryAddress,
@@ -34,10 +33,7 @@ async function deployRepo(
   const {network} = hre;
   let pluginRepoFactoryAddr: string;
 
-  if (
-    process.env.PLUGIN_REPO_FACTORY_ADDRESS &&
-    !isLocalChain(hre.network.name)
-  ) {
+  if (process.env.PLUGIN_REPO_FACTORY_ADDRESS) {
     // Use the given value when deploying to a live network
     pluginRepoFactoryAddr = process.env.PLUGIN_REPO_FACTORY_ADDRESS;
   } else {

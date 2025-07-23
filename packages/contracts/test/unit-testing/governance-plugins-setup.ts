@@ -4,6 +4,7 @@ import {
   GovernancePluginsSetup__factory,
   MainVotingPlugin__factory,
 } from '../../typechain';
+import {getPluginSetupProcessorAddress} from '../../utils/helpers';
 import {deployTestDao} from '../helpers/test-dao';
 import {Operation} from '../helpers/types';
 import {
@@ -17,10 +18,9 @@ import {
   UPDATE_VOTING_SETTINGS_PERMISSION_ID,
   VotingMode,
 } from './common';
-import {activeContractsList} from '@aragon/osx-ethers';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {expect} from 'chai';
-import {ethers} from 'hardhat';
+import {ethers, network} from 'hardhat';
 
 describe('Governance Plugins Setup', function () {
   let alice: SignerWithAddress;
@@ -32,10 +32,9 @@ describe('Governance Plugins Setup', function () {
     [alice, bob] = await ethers.getSigners();
     dao = await deployTestDao(alice);
 
-    const hardhatForkNetwork = (process.env.NETWORK_NAME ??
-      'mainnet') as keyof typeof activeContractsList;
-    const pspAddress =
-      activeContractsList[hardhatForkNetwork].PluginSetupProcessor;
+    const pspAddress = process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      ? process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      : getPluginSetupProcessorAddress(network.name, true);
 
     governancePluginsSetup = await new GovernancePluginsSetup__factory(
       alice
