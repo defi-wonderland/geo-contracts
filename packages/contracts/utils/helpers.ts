@@ -13,6 +13,8 @@ import {upgrades} from 'hardhat';
 
 export type NetworkNameMapping = {[index: string]: string};
 
+export type NetworkBlockNumberMapping = {[index: string]: number};
+
 export type ContractList = {[index: string]: {[index: string]: string}};
 
 export type ContractBlockNumberList = {
@@ -59,6 +61,32 @@ export function getPluginRepoFactoryAddress(networkName: string): string {
     );
   }
   return pluginRepoFactoryAddr;
+}
+
+export function getPluginRepoRegistryAddress(networkName: string): string {
+  let pluginRepoRegistryAddr: string;
+
+  if (
+    networkName === 'localhost' ||
+    networkName === 'hardhat' ||
+    networkName === 'coverage'
+  ) {
+    const hardhatForkNetwork = process.env.NETWORK_NAME ?? 'mainnet';
+
+    pluginRepoRegistryAddr =
+      osxContracts[hardhatForkNetwork].PluginRepoRegistry;
+    console.log(
+      `Using the "${hardhatForkNetwork}" PluginRepoRegistry address (${pluginRepoRegistryAddr}) for deployment testing on network "${networkName}"`
+    );
+  } else {
+    pluginRepoRegistryAddr =
+      osxContracts[networkNameMapping[networkName]].PluginRepoRegistry;
+
+    console.log(
+      `Using the ${networkNameMapping[networkName]} PluginRepoRegistry address (${pluginRepoRegistryAddr}) for deployment...`
+    );
+  }
+  return pluginRepoRegistryAddr;
 }
 
 export function getPluginSetupProcessorAddress(

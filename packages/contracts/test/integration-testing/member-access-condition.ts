@@ -10,7 +10,7 @@ import {PluginSetupRefStruct} from '../../typechain/@aragon/osx/framework/dao/DA
 import {
   findEventTopicLog,
   getPluginRepoFactoryAddress,
-  osxContracts,
+  getPluginSetupProcessorAddress,
 } from '../../utils/helpers';
 import {installPlugin} from '../helpers/setup';
 import {deployTestDao} from '../helpers/test-dao';
@@ -27,7 +27,6 @@ import {expect} from 'chai';
 import {ethers, network} from 'hardhat';
 
 const release = 1;
-const hardhatForkNetwork = process.env.NETWORK_NAME ?? 'mainnet';
 const pluginSettings: MajorityVotingBase.VotingSettingsStruct = {
   duration: 60 * 60 * 24,
   supportThreshold: 1,
@@ -54,19 +53,22 @@ describe('Member Access Condition E2E', () => {
     [deployer, pluginUpgrader, alice] = await ethers.getSigners();
 
     // Get the PluginRepoFactory address
-    const pluginRepoFactoryAddr: string = getPluginRepoFactoryAddress(
-      network.name
-    );
+    const pluginRepoFactoryAddr: string = process.env
+      .PLUGIN_REPO_FACTORY_ADDRESS
+      ? process.env.PLUGIN_REPO_FACTORY_ADDRESS
+      : getPluginRepoFactoryAddress(network.name);
+
     const pluginRepoFactory = PluginRepoFactory__factory.connect(
       pluginRepoFactoryAddr,
       deployer
     );
 
     // PSP
-    psp = PluginSetupProcessor__factory.connect(
-      osxContracts[hardhatForkNetwork]['PluginSetupProcessor'],
-      deployer
-    );
+    const pspAddress = process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      ? process.env.PLUGIN_SETUP_PROCESSOR_ADDRESS
+      : getPluginSetupProcessorAddress(network.name, true);
+
+    psp = PluginSetupProcessor__factory.connect(pspAddress, deployer);
 
     // Create a new PluginRepo
     let tx = await pluginRepoFactory.createPluginRepo(

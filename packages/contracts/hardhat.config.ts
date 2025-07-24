@@ -1,4 +1,4 @@
-import {NetworkNameMapping} from './utils/helpers';
+import {NetworkNameMapping, NetworkBlockNumberMapping} from './utils/helpers';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomiclabs/hardhat-etherscan';
@@ -20,21 +20,31 @@ dotenvConfig({path: resolve(__dirname, dotenvConfigPath)});
 const apiUrls: NetworkNameMapping = {
   mainnet: 'https://eth-mainnet.g.alchemy.com/v2/',
   sepolia: 'https://eth-sepolia.g.alchemy.com/v2/',
+  polygon: 'https://polygon-mainnet.g.alchemy.com/v2/',
   conduit: process.env.DEPLOYMENT_RPC_ENDPOINT ?? '',
+};
+
+const blockNumbers: NetworkBlockNumberMapping = {
+  mainnet: 21900000,
+  sepolia: 7777777,
+  polygon: 68000000,
+  conduit: 500,
 };
 
 export const networks: {[index: string]: NetworkUserConfig} = {
   hardhat: {
     chainId: 31337,
     forking: {
-      url: `${
-        apiUrls[process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'mainnet']
-      }${process.env.ALCHEMY_API_KEY}`,
+      url: apiUrls.conduit,
+      blockNumber:
+        blockNumbers[
+          process.env.NETWORK_NAME ? process.env.NETWORK_NAME : 'conduit'
+        ],
     },
   },
   conduit: {
     chainId: 80451,
-    url: process.env.DEPLOYMENT_RPC_ENDPOINT,
+    url: apiUrls.conduit,
   },
   mainnet: {
     chainId: 1,
@@ -42,11 +52,11 @@ export const networks: {[index: string]: NetworkUserConfig} = {
   },
   sepolia: {
     chainId: 11155111,
-    url: `${apiUrls.sepolia}${process.env.INFURA_API_KEY}`,
+    url: `${apiUrls.sepolia}${process.env.ALCHEMY_API_KEY}`,
   },
   polygon: {
     chainId: 137,
-    url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+    url: `${apiUrls.polygon}${process.env.ALCHEMY_API_KEY}`,
   },
   custom: {
     chainId: 19411,
@@ -82,7 +92,7 @@ extendEnvironment((hre: HardhatRuntimeEnvironment) => {
 });
 
 const config: HardhatUserConfig = {
-  defaultNetwork: 'conduit',
+  defaultNetwork: 'hardhat',
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY || '',
