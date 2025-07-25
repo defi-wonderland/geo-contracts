@@ -8,7 +8,6 @@ import {
   CONTENT_PERMISSION_ID,
   EXECUTE_PERMISSION_ID,
   SUBSPACE_PERMISSION_ID,
-  PAYER_PERMISSION_ID,
   ZERO_BYTES32,
 } from './common';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
@@ -193,28 +192,6 @@ describe('Space Plugin', function () {
       .withArgs(dao.address, ADDRESS_TWO);
   });
 
-  it('The Space plugin emits an event when a payer is set', async () => {
-    // Fails by default
-    await expect(spacePlugin.connect(alice).setPayer(ADDRESS_TWO))
-      .to.be.revertedWithCustomError(spacePlugin, 'DaoUnauthorized')
-      .withArgs(
-        dao.address,
-        spacePlugin.address,
-        alice.address,
-        PAYER_PERMISSION_ID
-      );
-
-    // Grant
-    await dao.grant(spacePlugin.address, alice.address, PAYER_PERMISSION_ID);
-
-    // Set content
-    await expect(spacePlugin.connect(alice).setPayer(ADDRESS_TWO))
-      .to.emit(spacePlugin, 'PayerSet')
-      .withArgs(dao.address, ADDRESS_TWO);
-
-    expect(await spacePlugin.payer()).to.eq(ADDRESS_TWO);
-  });
-
   describe('Permissions', () => {
     beforeEach(async () => {
       await dao
@@ -227,10 +204,6 @@ describe('Space Plugin', function () {
 
       await dao
         .grant(spacePlugin.address, dao.address, SUBSPACE_PERMISSION_ID)
-        .then(tx => tx.wait());
-
-      await dao
-        .grant(spacePlugin.address, dao.address, PAYER_PERMISSION_ID)
         .then(tx => tx.wait());
     });
 
@@ -336,34 +309,6 @@ describe('Space Plugin', function () {
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'SubspaceRemoved')
         .withArgs(dao.address, ADDRESS_ONE);
-    });
-
-    it('Only the DAO can set the payer', async () => {
-      // They cannot
-      await expect(spacePlugin.connect(alice).setPayer(ADDRESS_ONE)).to.be
-        .reverted;
-      await expect(spacePlugin.connect(bob).setPayer(ADDRESS_ONE)).to.be
-        .reverted;
-      await expect(spacePlugin.connect(carol).setPayer(ADDRESS_ONE)).to.be
-        .reverted;
-
-      // The DAO can
-      const actions: IDAO.ActionStruct[] = [
-        {
-          to: spacePlugin.address,
-          value: 0,
-          data: SpacePlugin__factory.createInterface().encodeFunctionData(
-            'setPayer',
-            [ADDRESS_ONE]
-          ),
-        },
-      ];
-
-      await expect(dao.execute(ZERO_BYTES32, actions, 0))
-        .to.emit(spacePlugin, 'PayerSet')
-        .withArgs(dao.address, ADDRESS_ONE);
-
-      expect(await spacePlugin.payer()).to.eq(ADDRESS_ONE);
     });
   });
 });

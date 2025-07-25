@@ -43,7 +43,6 @@ import {
   VotingSettings,
   ZERO_BYTES32,
   SUBSPACE_PERMISSION_ID,
-  PAYER_PERMISSION_ID,
   PROPOSER_PERMISSION_ID,
 } from './common';
 import {defaultMainVotingSettings} from './common';
@@ -139,8 +138,6 @@ describe('Main Voting Plugin', function () {
     await dao.grant(spacePlugin.address, dao.address, CONTENT_PERMISSION_ID);
     // The DAO can manage subspaces on the Space
     await dao.grant(spacePlugin.address, dao.address, SUBSPACE_PERMISSION_ID);
-    // The DAO can set the payer on the Space
-    await dao.grant(spacePlugin.address, dao.address, PAYER_PERMISSION_ID);
     // The DAO is ROOT on itself
     await dao.grant(dao.address, dao.address, ROOT_PERMISSION_ID);
     // The plugin can propose members on the member access helper
@@ -397,20 +394,6 @@ describe('Main Voting Plugin', function () {
 
       await expect(
         mainVotingPlugin
-          .connect(bob)
-          .proposeSetPayer(
-            toUtf8Bytes('ipfs://meta-3'),
-            bob.address,
-            spacePlugin.address
-          )
-      ).to.not.be.reverted;
-
-      expect(await mainVotingPlugin.proposalCount()).to.equal(
-        BigNumber.from(5)
-      );
-
-      await expect(
-        mainVotingPlugin
           .connect(carol)
           .proposeEdits(
             toUtf8Bytes('ipfs://meta'),
@@ -452,18 +435,6 @@ describe('Main Voting Plugin', function () {
           .proposeRemoveSubspace(
             toUtf8Bytes('ipfs://'),
             ADDRESS_ONE,
-            spacePlugin.address
-          )
-      )
-        .to.be.revertedWithCustomError(mainVotingPlugin, 'NotAMember')
-        .withArgs(dave.address);
-
-      await expect(
-        mainVotingPlugin
-          .connect(dave)
-          .proposeSetPayer(
-            toUtf8Bytes('ipfs://'),
-            ADDRESS_TWO,
             spacePlugin.address
           )
       )
@@ -1120,50 +1091,6 @@ describe('Main Voting Plugin', function () {
         mainVotingPluginInterface.encodeFunctionData('removeEditor', [
           bob.address,
         ])
-      );
-    });
-
-    it('proposeSetPayer creates a proposal with the right values', async () => {
-      let pid = 0;
-
-      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(0);
-      await expect(
-        mainVotingPlugin.proposeSetPayer(
-          toUtf8Bytes('ipfs://metadata'),
-          alice.address,
-          spacePlugin.address
-        )
-      ).to.not.be.reverted;
-      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(1);
-
-      let proposal = await mainVotingPlugin.getProposal(pid);
-      expect(proposal.actions.length).to.eq(1);
-      expect(proposal.actions[0].to).to.eq(spacePlugin.address);
-      expect(proposal.actions[0].value.toNumber()).to.eq(0);
-      expect(proposal.actions[0].data).to.eq(
-        spacePluginInterface.encodeFunctionData('setPayer', [alice.address])
-      );
-
-      // 2
-      pid++;
-
-      await expect(
-        mainVotingPlugin.proposeSetPayer(
-          toUtf8Bytes('ipfs://more-metadata-here'),
-          bob.address,
-          '0x5555555555666666666677777777778888888888'
-        )
-      ).to.not.be.reverted;
-      expect((await mainVotingPlugin.proposalCount()).toNumber()).to.eq(2);
-
-      proposal = await mainVotingPlugin.getProposal(pid);
-      expect(proposal.actions.length).to.eq(1);
-      expect(proposal.actions[0].to).to.eq(
-        '0x5555555555666666666677777777778888888888'
-      );
-      expect(proposal.actions[0].value.toNumber()).to.eq(0);
-      expect(proposal.actions[0].data).to.eq(
-        spacePluginInterface.encodeFunctionData('setPayer', [bob.address])
       );
     });
   });
