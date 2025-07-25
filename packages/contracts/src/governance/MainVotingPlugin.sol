@@ -24,6 +24,7 @@ bytes4 constant MAIN_SPACE_VOTING_INTERFACE_ID = MainVotingPlugin.initialize.sel
     MainVotingPlugin.proposeRemoveMember.selector ^
     MainVotingPlugin.proposeAddEditor.selector ^
     MainVotingPlugin.proposeRemoveEditor.selector ^
+    MainVotingPlugin.proposeSetPayer.selector ^
     MainVotingPlugin.addEditor.selector ^
     MainVotingPlugin.removeEditor.selector ^
     MainVotingPlugin.addMember.selector ^
@@ -123,6 +124,24 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
         uint64 endDate,
         bytes metadata,
         address indexed subspace,
+        address dao
+    );
+
+    /// @notice Emitted when a proposal to set the payer is created.
+    /// @param proposalId The ID of the created proposal.
+    /// @param creator The address of the account that created the proposal.
+    /// @param startDate The timestamp when voting starts.
+    /// @param endDate The timestamp when voting ends.
+    /// @param metadata The metadata associated with the proposal.
+    /// @param payer The address proposed to be authorized for creating payments.
+    /// @param dao The address of the DAO.
+    event SetPayerProposalCreated(
+        uint256 indexed proposalId,
+        address indexed creator,
+        uint64 startDate,
+        uint64 endDate,
+        bytes metadata,
+        address indexed payer,
         address dao
     );
 
@@ -613,6 +632,41 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
             proposal_.parameters.endDate,
             _metadataContentUri,
             _editor,
+            address(dao())
+        );
+    }
+
+    /// @notice Creates a proposal to assign a payer for a given Space DAO.
+    /// @dev This function wraps an action that, if approved, will set the payer
+    ///      on the target SpacePlugin. It must be executed via the DAO governance process.
+    /// @param _metadataContentUri The metadata associated with the proposal (e.g. IPFS URI).
+    /// @param _proposedPayer The address that will be authorized to create payments on behalf of the given Space plugin.
+    /// @param _spacePlugin The address of the Space plugin whose payer will be updated.
+    /// @return proposalId The ID of the created proposal.
+    function proposeSetPayer(
+        bytes calldata _metadataContentUri,
+        address _proposedPayer,
+        address _spacePlugin
+    ) public onlyMembers returns (uint256 proposalId) {
+        if (_proposedPayer == address(0) || _spacePlugin == address(0)) {
+            revert EmptyContent();
+        }
+
+        proposalId = _proposeWrappedAction(
+            _metadataContentUri,
+            _spacePlugin,
+            abi.encodeCall(SpacePlugin.setPayer, (_proposedPayer))
+        );
+
+        Proposal storage proposal_ = proposals[proposalId];
+
+        emit SetPayerProposalCreated(
+            proposalId,
+            proposalCreators[proposalId],
+            proposal_.parameters.startDate,
+            proposal_.parameters.endDate,
+            _metadataContentUri,
+            _proposedPayer,
             address(dao())
         );
     }
