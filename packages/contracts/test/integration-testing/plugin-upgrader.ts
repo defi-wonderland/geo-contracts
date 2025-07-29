@@ -28,6 +28,7 @@ import {installPlugin} from '../helpers/setup';
 import {deployTestDao} from '../helpers/test-dao';
 import {
   ADDRESS_ONE,
+  ADDRESS_THREE,
   ADDRESS_ZERO,
   UPGRADE_PLUGIN_PERMISSION_ID,
   ZERO_BYTES32,
@@ -567,6 +568,7 @@ describe('Plugin upgrader', () => {
 
       // Install build 1
       const data1 = await pSetupBuild1.encodeInstallationParams(
+        ADDRESS_THREE,
         'ipfs://',
         '0x',
         ADDRESS_ZERO,

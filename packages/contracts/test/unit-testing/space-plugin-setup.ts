@@ -42,6 +42,7 @@ describe('Space Plugin Setup', function () {
   describe('prepareInstallation', async () => {
     it('returns the plugin, helpers, and permissions (no pluginUpgrader)', async () => {
       const initData = await spacePluginSetup.encodeInstallationParams(
+        ADDRESS_ONE,
         defaultInitData.contentUri,
         defaultInitData.metadata,
         ADDRESS_ZERO,
@@ -94,6 +95,7 @@ describe('Space Plugin Setup', function () {
     it('returns the plugin, helpers, and permissions (with a pluginUpgrader)', async () => {
       const pluginUpgrader = bob.address;
       const initData = await spacePluginSetup.encodeInstallationParams(
+        ADDRESS_ONE,
         defaultInitData.contentUri,
         defaultInitData.metadata,
         ADDRESS_ZERO,
