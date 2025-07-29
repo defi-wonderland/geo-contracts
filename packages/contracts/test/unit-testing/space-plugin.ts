@@ -1,9 +1,16 @@
-import {DAO, IDAO, SpacePlugin, SpacePlugin__factory} from '../../typechain';
+import {
+  DAO,
+  IDAO,
+  SpacePlugin,
+  SpacePlugin__factory,
+  TestArbSys__factory,
+} from '../../typechain';
 import {deployWithProxy} from '../../utils/helpers';
 import {deployTestDao} from '../helpers/test-dao';
 import {
   ADDRESS_ONE,
   ADDRESS_TWO,
+  ADDRESS_THREE,
   ADDRESS_ZERO,
   CONTENT_PERMISSION_ID,
   EXECUTE_PERMISSION_ID,
@@ -13,7 +20,7 @@ import {
 } from './common';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {expect} from 'chai';
-import {ethers} from 'hardhat';
+import {ethers, network} from 'hardhat';
 
 export type InitData = {contentUri: string; metadata: string};
 export const defaultInitData: InitData = {
@@ -29,6 +36,8 @@ describe('Space Plugin', function () {
   let spacePlugin: SpacePlugin;
   let defaultInput: InitData;
 
+  const arbSysAddress: string = '0x0000000000000000000000000000000000000064';
+
   before(async () => {
     [alice, bob, carol] = await ethers.getSigners();
     dao = await deployTestDao(alice);
@@ -37,16 +46,28 @@ describe('Space Plugin', function () {
   });
 
   beforeEach(async () => {
+    await network.provider.send('hardhat_setCode', [
+      arbSysAddress,
+      TestArbSys__factory.bytecode,
+    ]);
+
     spacePlugin = await deployWithProxy<SpacePlugin>(
       new SpacePlugin__factory(alice)
     );
 
     await spacePlugin.initialize(
       dao.address,
+      ADDRESS_THREE,
       defaultInput.contentUri,
       defaultInput.metadata,
       ADDRESS_ZERO
     );
+  });
+
+  describe('constants', async () => {
+    it('Should set the ARB_SYS to address(100)', async () => {
+      expect(await spacePlugin.ARB_SYS()).to.eq(arbSysAddress);
+    });
   });
 
   describe('initialize', async () => {
@@ -54,11 +75,45 @@ describe('Space Plugin', function () {
       await expect(
         spacePlugin.initialize(
           dao.address,
+          ADDRESS_THREE,
           defaultInput.contentUri,
           defaultInput.metadata,
           ADDRESS_ZERO
         )
       ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+
+    it('The Space plugin reverts if trying to set an invalid address', async () => {
+      spacePlugin = await deployWithProxy<SpacePlugin>(
+        new SpacePlugin__factory(alice)
+      );
+
+      await expect(
+        spacePlugin.initialize(
+          dao.address,
+          ADDRESS_ZERO,
+          defaultInput.contentUri,
+          defaultInput.metadata,
+          ADDRESS_ZERO
+        )
+      ).to.be.revertedWithCustomError(spacePlugin, 'InvalidAddress');
+    });
+
+    it('Should set the DAO and the PaymentManager', async () => {
+      spacePlugin = await deployWithProxy<SpacePlugin>(
+        new SpacePlugin__factory(alice)
+      );
+
+      await spacePlugin.initialize(
+        dao.address,
+        ADDRESS_THREE,
+        defaultInput.contentUri,
+        defaultInput.metadata,
+        ADDRESS_ZERO
+      );
+
+      expect(await spacePlugin.dao()).to.eq(dao.address);
+      expect(await spacePlugin.paymentManager()).to.eq(ADDRESS_THREE);
     });
 
     it('Should emit a new content event', async () => {
@@ -69,6 +124,7 @@ describe('Space Plugin', function () {
       await expect(
         spacePlugin.initialize(
           dao.address,
+          ADDRESS_THREE,
           defaultInput.contentUri,
           defaultInput.metadata,
           ADDRESS_ZERO
@@ -87,6 +143,7 @@ describe('Space Plugin', function () {
       await expect(
         spacePlugin.initialize(
           dao.address,
+          ADDRESS_THREE,
           defaultInput.contentUri,
           defaultInput.metadata,
           ADDRESS_ONE
@@ -103,6 +160,7 @@ describe('Space Plugin', function () {
       await expect(
         spacePlugin.initialize(
           dao.address,
+          ADDRESS_THREE,
           defaultInput.contentUri,
           defaultInput.metadata,
           ADDRESS_TWO
@@ -211,8 +269,6 @@ describe('Space Plugin', function () {
     await expect(spacePlugin.connect(alice).setPayer(ADDRESS_TWO))
       .to.emit(spacePlugin, 'PayerSet')
       .withArgs(dao.address, ADDRESS_TWO);
-
-    expect(await spacePlugin.payer()).to.eq(ADDRESS_TWO);
   });
 
   describe('Permissions', () => {
@@ -362,8 +418,6 @@ describe('Space Plugin', function () {
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'PayerSet')
         .withArgs(dao.address, ADDRESS_ONE);
-
-      expect(await spacePlugin.payer()).to.eq(ADDRESS_ONE);
     });
   });
 });

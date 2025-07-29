@@ -2,6 +2,8 @@
 pragma solidity ^0.8.8;
 
 import {IDAO, PluginUUPSUpgradeable} from "@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol";
+import {ArbSys} from "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {IPaymentManager} from "../cross-chain/IPaymentManager.sol";
 import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID, PAYER_PERMISSION_ID} from "../constants.sol";
 
 bytes4 constant SPACE_INTERFACE_ID = SpacePlugin.initialize.selector ^
@@ -14,9 +16,12 @@ bytes4 constant SPACE_INTERFACE_ID = SpacePlugin.initialize.selector ^
 /// @title SpacePlugin
 /// @dev Release 1, Build 1
 contract SpacePlugin is PluginUUPSUpgradeable {
-    /// @notice The address authorized to create payments on behalf of the current Space DAO.
-    /// @dev This address must be set via a governance proposal executed by the DAO.
-    address public payer;
+    /// @notice Interacts with core Arbitrum-specific system-level functionality.
+    /// @dev Precompiled contract that exists in every Arbitrum chain at address(100), 0x0000000000000000000000000000000000000064.
+    ArbSys public constant ARB_SYS = ArbSys(address(100));
+
+    /// @notice The address of the PaymentManager contract (L2).
+    address public paymentManager;
 
     /// @notice Emitted when the contents of a space change.
     /// @param dao The address of the DAO where this proposal was executed.
@@ -46,21 +51,30 @@ contract SpacePlugin is PluginUUPSUpgradeable {
 
     /// @notice Emitted when a payer is set for a Space DAO.
     /// @param dao The address of the DAO where this proposal was executed.
-    /// @param payer The address authorized to create payments for that DAO.
+    /// @param payer The address authorized to create payments for that DAO (L2).
     event PayerSet(address dao, address payer);
+
+    /// @notice Raised when attempting to set an invalid address.
+    error InvalidAddress();
 
     /// @notice Initializes the plugin when build 1 is installed.
     /// @param _dao The address of the DAO to read the permissions from.
+    /// @param _paymentManager The address of the PaymentManager contract (L2).
     /// @param _firstEditsContentUri An IPFS URI pointing to the contents of the first block's item (title).
     /// @param _firstEditsMetadata The metadata associated with the contents of the first block's item (title).
     /// @param _predecessorSpace Optionally, the address of the space contract preceding this one.
     function initialize(
         IDAO _dao,
+        address _paymentManager,
         string memory _firstEditsContentUri,
         bytes memory _firstEditsMetadata,
         address _predecessorSpace
     ) external initializer {
+        if (_paymentManager == address(0)) revert InvalidAddress();
+
         __PluginUUPSUpgradeable_init(_dao);
+
+        paymentManager = _paymentManager;
 
         if (_predecessorSpace != address(0)) {
             emit SuccessorSpaceCreated(address(dao()), _predecessorSpace);
@@ -114,11 +128,14 @@ contract SpacePlugin is PluginUUPSUpgradeable {
     }
 
     /// @notice Sets the payer address for the Space DAO.
-    /// @param _payer The address authorized to create payments on behalf of the DAO.
+    /// @param _payer The address authorized to create payments on behalf of the DAO (L2).
     function setPayer(address _payer) external auth(PAYER_PERMISSION_ID) {
-        if (_payer == payer) return;
+        // Trigger cross-chain update
+        bytes memory _data = abi.encodeCall(IPaymentManager.setPayer, (_payer));
 
-        payer = _payer;
+        // Send message to L2 via ArbSys
+        ARB_SYS.sendTxToL1(paymentManager, _data);
+
         emit PayerSet(address(dao()), _payer);
     }
 

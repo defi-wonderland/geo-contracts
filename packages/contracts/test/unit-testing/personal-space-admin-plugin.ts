@@ -102,6 +102,7 @@ describe('Personal Space Admin Plugin', function () {
     );
     await spacePlugin.initialize(
       dao.address,
+      ADDRESS_THREE,
       defaultInput.contentUri,
       defaultInput.metadata,
       ADDRESS_ZERO
