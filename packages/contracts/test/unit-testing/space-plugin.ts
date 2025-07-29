@@ -20,6 +20,7 @@ import {
 } from './common';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {expect} from 'chai';
+import {BigNumber} from 'ethers';
 import {ethers, network} from 'hardhat';
 
 export type InitData = {contentUri: string; metadata: string};
@@ -37,6 +38,9 @@ describe('Space Plugin', function () {
   let defaultInput: InitData;
 
   const arbSysAddress: string = '0x0000000000000000000000000000000000000064';
+  const txId: BigNumber = ethers.BigNumber.from(
+    '43648854190046191863104915490136973604631114438068862776475182666495385665664'
+  );
 
   before(async () => {
     [alice, bob, carol] = await ethers.getSigners();
@@ -268,7 +272,7 @@ describe('Space Plugin', function () {
     // Set content
     await expect(spacePlugin.connect(alice).setPayer(ADDRESS_TWO))
       .to.emit(spacePlugin, 'PayerSet')
-      .withArgs(dao.address, ADDRESS_TWO);
+      .withArgs(dao.address, ADDRESS_TWO, txId);
   });
 
   describe('Permissions', () => {
@@ -417,7 +421,7 @@ describe('Space Plugin', function () {
 
       await expect(dao.execute(ZERO_BYTES32, actions, 0))
         .to.emit(spacePlugin, 'PayerSet')
-        .withArgs(dao.address, ADDRESS_ONE);
+        .withArgs(dao.address, ADDRESS_ONE, txId);
     });
   });
 });

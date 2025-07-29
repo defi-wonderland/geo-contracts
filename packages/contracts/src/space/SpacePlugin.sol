@@ -51,7 +51,8 @@ contract SpacePlugin is PluginUUPSUpgradeable {
     /// @notice Emitted when a payer is set for a Space DAO.
     /// @param dao The address of the DAO where this proposal was executed.
     /// @param payer The address authorized to create payments for that DAO (L2).
-    event PayerSet(address dao, address payer);
+    /// @param _txId A unique identifier for the L3-to-L2 transaction.
+    event PayerSet(address dao, address payer, uint256 _txId);
 
     /// @notice Raised when attempting to set an invalid address.
     error InvalidAddress();
@@ -133,9 +134,9 @@ contract SpacePlugin is PluginUUPSUpgradeable {
         bytes memory _data = abi.encodeCall(IPaymentManager.setPayer, (_payer));
 
         // Send message to L2 via ArbSys
-        ARB_SYS.sendTxToL1(paymentManager, _data);
+        uint256 _txId = ARB_SYS.sendTxToL1(paymentManager, _data);
 
-        emit PayerSet(address(dao()), _payer);
+        emit PayerSet(address(dao()), _payer, _txId);
     }
 
     /// @notice This empty reserved space is put in place to allow future versions to add new variables without shifting down storage in the inheritance chain (see [OpenZeppelin's guide about storage gaps](https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps)).
