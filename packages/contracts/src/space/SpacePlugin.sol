@@ -10,8 +10,7 @@ bytes4 constant SPACE_INTERFACE_ID = SpacePlugin.initialize.selector ^
     SpacePlugin.publishEdits.selector ^
     SpacePlugin.flagContent.selector ^
     SpacePlugin.acceptSubspace.selector ^
-    SpacePlugin.removeSubspace.selector ^
-    SpacePlugin.setPayer.selector;
+    SpacePlugin.removeSubspace.selector;
 
 /// @title SpacePlugin
 /// @dev Release 1, Build 1

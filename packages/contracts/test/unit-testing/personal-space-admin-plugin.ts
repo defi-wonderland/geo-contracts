@@ -28,7 +28,6 @@ import {
   EDITOR_PERMISSION_ID,
   EXECUTE_PERMISSION_ID,
   SUBSPACE_PERMISSION_ID,
-  PAYER_PERMISSION_ID,
   ROOT_PERMISSION_ID,
 } from './common';
 import {
@@ -57,7 +56,6 @@ export const psvpInterface = new ethers.utils.Interface([
   'function submitNewMember(address _newMember)',
   'function submitRemoveEditor(address _editor)',
   'function submitRemoveMember(address _member)',
-  'function submitSetPayer(address _payer, address _spacePlugin)',
   'function leaveSpace()',
 ]);
 
@@ -146,7 +144,6 @@ describe('Personal Space Admin Plugin', function () {
     // The DAO can use the Space
     await dao.grant(spacePlugin.address, dao.address, CONTENT_PERMISSION_ID);
     await dao.grant(spacePlugin.address, dao.address, SUBSPACE_PERMISSION_ID);
-    await dao.grant(spacePlugin.address, dao.address, PAYER_PERMISSION_ID);
     // The DAO is root on itself
     await dao.grant(dao.address, dao.address, ROOT_PERMISSION_ID);
   });
@@ -284,14 +281,9 @@ describe('Personal Space Admin Plugin', function () {
             .connect(account)
             .submitRemoveSubspace(ADDRESS_THREE, spacePlugin.address)
         ).to.not.be.reverted;
-        await expect(
-          personalSpaceVotingPlugin
-            .connect(account)
-            .submitSetPayer(ADDRESS_THREE, spacePlugin.address)
-        ).to.not.be.reverted;
       }
       expect(await personalSpaceVotingPlugin.proposalCount()).to.equal(
-        BigNumber.from(10)
+        BigNumber.from(8)
       );
 
       // Non members
@@ -320,13 +312,6 @@ describe('Personal Space Admin Plugin', function () {
         personalSpaceVotingPlugin
           .connect(carol)
           .submitRemoveSubspace(ADDRESS_TWO, spacePlugin.address)
-      )
-        .to.be.revertedWithCustomError(personalSpaceVotingPlugin, 'NotAMember')
-        .withArgs(carol.address);
-      await expect(
-        personalSpaceVotingPlugin
-          .connect(carol)
-          .submitSetPayer(ADDRESS_TWO, spacePlugin.address)
       )
         .to.be.revertedWithCustomError(personalSpaceVotingPlugin, 'NotAMember')
         .withArgs(carol.address);
