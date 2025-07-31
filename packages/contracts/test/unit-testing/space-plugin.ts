@@ -23,6 +23,8 @@ import {expect} from 'chai';
 import {BigNumber} from 'ethers';
 import {ethers, network} from 'hardhat';
 
+import hre = require('hardhat');
+
 export type InitData = {contentUri: string; metadata: string};
 export const defaultInitData: InitData = {
   contentUri: 'ipfs://',
@@ -38,9 +40,13 @@ describe('Space Plugin', function () {
   let defaultInput: InitData;
 
   const arbSysAddress: string = '0x0000000000000000000000000000000000000064';
-  const txId: BigNumber = ethers.BigNumber.from(
-    '43648854190046191863104915490136973604631114438068862776475182666495385665664'
-  );
+  const txId: BigNumber = hre.tasks.__SOLIDITY_COVERAGE_RUNNING
+    ? ethers.BigNumber.from(
+        '43648854190046191863105000711709703329760400517111128184853904182558309440352'
+      )
+    : ethers.BigNumber.from(
+        '43648854190046191863104915490136973604631114438068862776475182666495385665664'
+      );
 
   before(async () => {
     [alice, bob, carol] = await ethers.getSigners();
