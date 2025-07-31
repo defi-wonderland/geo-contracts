@@ -22,6 +22,7 @@ import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {expect} from 'chai';
 import {BigNumber} from 'ethers';
 import {ethers, network} from 'hardhat';
+
 import HRE = require('hardhat');
 
 export type InitData = {contentUri: string; metadata: string};
@@ -29,7 +30,6 @@ export const defaultInitData: InitData = {
   contentUri: 'ipfs://',
   metadata: '0x',
 };
-
 
 describe('Space Plugin', function () {
   let alice: SignerWithAddress;
