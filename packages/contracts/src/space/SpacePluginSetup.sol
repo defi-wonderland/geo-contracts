@@ -33,6 +33,7 @@ contract SpacePluginSetup is PluginSetup {
     ) external returns (address plugin, PreparedSetupData memory preparedSetupData) {
         // Decode incoming params
         (
+            address _paymentManager,
             string memory _firstBlockEditsContentUri,
             bytes memory _firstBlockEditsMetadata,
             address _predecessorAddress,
@@ -46,6 +47,7 @@ contract SpacePluginSetup is PluginSetup {
                 SpacePlugin.initialize,
                 (
                     IDAO(_dao),
+                    _paymentManager,
                     _firstBlockEditsContentUri,
                     _firstBlockEditsMetadata,
                     _predecessorAddress
@@ -149,6 +151,7 @@ contract SpacePluginSetup is PluginSetup {
 
     /// @notice Encodes the given installation parameters into a byte array
     function encodeInstallationParams(
+        address _paymentManager,
         string memory _firstBlockEditsContentUri,
         bytes memory _firstBlockEditsMetadata,
         address _predecessorAddress,
@@ -156,6 +159,7 @@ contract SpacePluginSetup is PluginSetup {
     ) public pure returns (bytes memory) {
         return
             abi.encode(
+                _paymentManager,
                 _firstBlockEditsContentUri,
                 _firstBlockEditsMetadata,
                 _predecessorAddress,
@@ -170,6 +174,7 @@ contract SpacePluginSetup is PluginSetup {
         public
         pure
         returns (
+            address paymentManager,
             string memory firstBlockEditsContentUri,
             bytes memory firstBlockEditsMetadata,
             address predecessorAddress,
@@ -177,11 +182,12 @@ contract SpacePluginSetup is PluginSetup {
         )
     {
         (
+            paymentManager,
             firstBlockEditsContentUri,
             firstBlockEditsMetadata,
             predecessorAddress,
             pluginUpgrader
-        ) = abi.decode(_data, (string, bytes, address, address));
+        ) = abi.decode(_data, (address, string, bytes, address, address));
     }
 
     /// @notice Encodes the given uninstallation parameters into a byte array

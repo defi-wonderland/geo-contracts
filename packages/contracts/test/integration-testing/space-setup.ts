@@ -11,7 +11,7 @@ import {getPluginSetupProcessorAddress} from '../../utils/helpers';
 import {getPluginRepoInfo} from '../../utils/plugin-repo-info';
 import {installPlugin, uninstallPlugin} from '../helpers/setup';
 import {deployTestDao} from '../helpers/test-dao';
-import {ADDRESS_ZERO} from '../unit-testing/common';
+import {ADDRESS_THREE, ADDRESS_ZERO} from '../unit-testing/common';
 import {
   DAO,
   PluginRepo__factory,
@@ -102,6 +102,7 @@ describe('SpacePluginSetup processing', function () {
     beforeEach(async () => {
       // Install build 1.
       const data = await setup.encodeInstallationParams(
+        ADDRESS_THREE,
         'ipfs://',
         '0x',
         ADDRESS_ZERO,
