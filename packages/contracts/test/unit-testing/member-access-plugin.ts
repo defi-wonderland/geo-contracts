@@ -24,6 +24,7 @@ import {deployTestDao} from '../helpers/test-dao';
 import {
   ADDRESS_ONE,
   ADDRESS_TWO,
+  ADDRESS_THREE,
   ADDRESS_ZERO,
   EMPTY_DATA,
   EXECUTE_PERMISSION_ID,
@@ -107,6 +108,7 @@ describe('Member Access Plugin', function () {
     );
     await spacePlugin.initialize(
       dao.address,
+      ADDRESS_THREE,
       defaultInput.contentUri,
       defaultInput.metadata,
       ADDRESS_ZERO
@@ -981,6 +983,7 @@ describe('Member Access Plugin', function () {
         await expect(
           spacePlugin.initialize(
             dao.address,
+            ADDRESS_THREE,
             defaultInput.contentUri,
             defaultInput.metadata,
             ADDRESS_ZERO
